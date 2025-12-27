@@ -21,6 +21,10 @@ public class PersonService {
         return personRepository.findAll(offset, limit);
     }
 
+    public List<PersonRecord> findAll(int offset, int limit, String searchTerm) {
+        return personRepository.findAll(offset, limit, searchTerm);
+    }
+
     public Optional<PersonRecord> findById(Long id) {
         return personRepository.findById(id);
     }

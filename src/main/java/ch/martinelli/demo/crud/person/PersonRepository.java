@@ -4,11 +4,14 @@ import ch.martinelli.demo.crud.db.tables.records.PersonRecord;
 import org.jooq.DSLContext;
 import org.springframework.stereotype.Repository;
 
+import org.jooq.Condition;
+
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
 import static ch.martinelli.demo.crud.db.tables.Person.PERSON;
+import static org.jooq.impl.DSL.noCondition;
 
 @Repository
 public class PersonRepository {
@@ -20,7 +23,12 @@ public class PersonRepository {
     }
 
     public List<PersonRecord> findAll(int offset, int limit) {
+        return findAll(offset, limit, null);
+    }
+
+    public List<PersonRecord> findAll(int offset, int limit, String searchTerm) {
         return dsl.selectFrom(PERSON)
+                .where(buildSearchCondition(searchTerm))
                 .orderBy(PERSON.LAST_NAME.asc(), PERSON.FIRST_NAME.asc())
                 .offset(offset)
                 .limit(limit)
@@ -28,7 +36,21 @@ public class PersonRepository {
     }
 
     public int count() {
-        return dsl.fetchCount(PERSON);
+        return count(null);
+    }
+
+    public int count(String searchTerm) {
+        return dsl.fetchCount(dsl.selectFrom(PERSON).where(buildSearchCondition(searchTerm)));
+    }
+
+    private Condition buildSearchCondition(String searchTerm) {
+        if (searchTerm == null || searchTerm.isBlank()) {
+            return noCondition();
+        }
+        String pattern = "%" + searchTerm.toLowerCase() + "%";
+        return PERSON.FIRST_NAME.likeIgnoreCase(pattern)
+                .or(PERSON.LAST_NAME.likeIgnoreCase(pattern))
+                .or(PERSON.EMAIL.likeIgnoreCase(pattern));
     }
 
     public Optional<PersonRecord> findById(Long id) {

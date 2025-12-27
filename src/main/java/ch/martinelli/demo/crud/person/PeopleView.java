@@ -4,11 +4,15 @@ import ch.martinelli.demo.crud.db.tables.records.PersonRecord;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.grid.Grid;
+import com.vaadin.flow.component.icon.Icon;
+import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.splitlayout.SplitLayout;
+import com.vaadin.flow.component.textfield.TextField;
+import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.router.Menu;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
@@ -21,11 +25,13 @@ public class PeopleView extends VerticalLayout {
     private final PersonService personService;
     private final Grid<PersonRecord> grid;
     private final PersonForm form;
+    private final TextField searchField;
 
     public PeopleView(PersonService personService) {
         this.personService = personService;
         setSizeFull();
 
+        searchField = createSearchField();
         grid = createGrid();
         form = createForm();
 
@@ -36,7 +42,10 @@ public class PeopleView extends VerticalLayout {
             editPerson(personService.createNew());
         });
 
-        HorizontalLayout toolbar = new HorizontalLayout(addButton);
+        HorizontalLayout toolbar = new HorizontalLayout(searchField, addButton);
+        toolbar.setFlexGrow(1, searchField);
+        toolbar.setWidthFull();
+        toolbar.setDefaultVerticalComponentAlignment(Alignment.BASELINE);
 
         SplitLayout splitLayout = new SplitLayout(grid, form);
         splitLayout.setSizeFull();
@@ -47,6 +56,16 @@ public class PeopleView extends VerticalLayout {
         add(toolbar, splitLayout);
     }
 
+    private TextField createSearchField() {
+        TextField searchField = new TextField();
+        searchField.setPlaceholder("Search by name or email...");
+        searchField.setPrefixComponent(new Icon(VaadinIcon.SEARCH));
+        searchField.setClearButtonVisible(true);
+        searchField.setValueChangeMode(ValueChangeMode.LAZY);
+        searchField.addValueChangeListener(_ -> refreshGrid());
+        return searchField;
+    }
+
     private Grid<PersonRecord> createGrid() {
         Grid<PersonRecord> grid = new Grid<>(PersonRecord.class, false);
         grid.addColumn(PersonRecord::getFirstName).setHeader("First Name").setSortable(true);
@@ -54,7 +73,7 @@ public class PeopleView extends VerticalLayout {
         grid.addColumn(PersonRecord::getEmail).setHeader("Email").setSortable(true);
         grid.addColumn(PersonRecord::getPhone).setHeader("Phone").setSortable(true);
 
-        grid.setItems(query -> personService.findAll(query.getOffset(), query.getLimit()).stream());
+        grid.setItems(query -> personService.findAll(query.getOffset(), query.getLimit(), searchField.getValue()).stream());
 
         grid.asSingleSelect().addValueChangeListener(event -> {
             PersonRecord selected = event.getValue();
