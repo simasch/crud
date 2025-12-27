@@ -6,18 +6,16 @@ actor "User" as user
 
 rectangle "Person Management System" {
     usecase "UC-001\nList People" as UC001
-    usecase "UC-002\nView Person" as UC002
-    usecase "UC-003\nCreate Person" as UC003
-    usecase "UC-004\nUpdate Person" as UC004
+    usecase "UC-002\nManage Person" as UC002
     usecase "UC-005\nDelete Person" as UC005
     usecase "UC-006\nSearch People" as UC006
 }
 
 user --> UC001
 user --> UC002
-user --> UC003
-user --> UC004
 user --> UC005
 user --> UC006
+
+UC001 <.. UC002 : <<extends>>
 
 @enduml
